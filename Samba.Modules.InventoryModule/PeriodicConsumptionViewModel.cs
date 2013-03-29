@@ -54,9 +54,9 @@ namespace Samba.Modules.InventoryModule
 
         protected override bool CanSave(string arg)
         {
-            return false;
-            //return _applicationState.IsCurrentWorkPeriodOpen && PeriodicConsumptionItems.Count > 0
-            //    && Model.WorkPeriodId == _applicationState.CurrentWorkPeriod.Id && base.CanSave(arg);
+            return !_applicationState.IsCurrentWorkPeriodOpen && SelectedWarehouseConsumption != null
+                && SelectedWarehouseConsumption.PeriodicConsumptionItems.Count > 0
+                && Model.WorkPeriodId == _applicationState.CurrentWorkPeriod.Id && base.CanSave(arg);
         }
 
         private void OnUpdateCalculation(string obj)
@@ -70,10 +70,10 @@ namespace Samba.Modules.InventoryModule
             SelectedWarehouseConsumption.Refresh();
         }
 
-        protected override void Initialize()
+        public override void OnShown()
         {
-            base.Initialize();
-            if (WarehouseConsumptions.Any())
+            base.OnShown();
+            if (SelectedWarehouseConsumption == null && WarehouseConsumptions.Any())
                 SelectedWarehouseConsumption = WarehouseConsumptions.First();
         }
 

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
 using Samba.Domain.Models.Accounts;
 using Samba.Domain.Models.Automation;
@@ -172,6 +173,10 @@ namespace Samba.Persistance.Data
             modelBuilder.Entity<ChangePayment>().HasKey(p => new { p.Id, p.TicketId });
             modelBuilder.Entity<ChangePayment>().Property(p => p.Id).HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity);
             modelBuilder.Entity<Ticket>().HasMany(p => p.ChangePayments).WithRequired().HasForeignKey(x => x.TicketId);
+
+            modelBuilder.Entity<EntityScreenItem>().HasKey(p => new {p.Id, p.EntityScreenId});
+            modelBuilder.Entity<EntityScreenItem>().Property(p => p.Id).HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity);
+            modelBuilder.Entity<EntityScreen>().HasMany(p => p.ScreenItems).WithRequired().HasForeignKey(x => x.EntityScreenId);
 
             modelBuilder.Entity<Order>().Ignore(p => p.IsSelected);
             modelBuilder.Entity<Order>().HasKey(p => new { p.Id, p.TicketId });

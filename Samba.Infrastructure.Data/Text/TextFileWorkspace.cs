@@ -45,6 +45,7 @@ namespace Samba.Infrastructure.Data.Text
             if (!string.IsNullOrEmpty(o.ToString()) && (int)o != _tNumber) return;
             //var serializerHelper = new XmlSerializerHelper { IgnoreSerializableAttribute = true, IgnoreSerialisationErrors = true };
             //serializerHelper.Serialize(_storage, _fileName);
+            _storage.FixIdNumbers();
             var data = SilverlightSerializer.Serialize(_storage);
             File.WriteAllBytes(_fileName, data);
         }
@@ -112,14 +113,6 @@ namespace Samba.Infrastructure.Data.Text
         public void Add<T>(T item) where T : class
         {
             _storage.Add(item);
-        }
-
-        public void Add<T>(IEnumerable<T> items) where T : class
-        {
-            foreach (var item in items)
-            {
-                _storage.Add(item);
-            }
         }
 
         public void Update<T>(T item) where T : class
@@ -246,7 +239,7 @@ namespace Samba.Infrastructure.Data.Text
 
         public T Last<T>(Expression<Func<T, bool>> predictate, Expression<Func<T, object>>[] includes) where T : class,IEntityClass
         {
-            return _storage.GetItems<T>().Last(predictate.Compile());
+            return _storage.GetItems<T>().LastOrDefault(predictate.Compile());
         }
 
         public IEnumerable<T> Last<T>(int recordCount) where T : class,IEntityClass

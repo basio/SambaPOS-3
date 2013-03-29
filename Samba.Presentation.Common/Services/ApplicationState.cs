@@ -26,17 +26,20 @@ namespace Samba.Presentation.Common.Services
         private readonly IDepartmentService _departmentService;
         private readonly ISettingService _settingService;
         private readonly ICacheService _cacheService;
+        private readonly IExpressionService _expressionService;
         private readonly StateMachine<AppScreens, AppScreens> _screenState;
 
         [ImportingConstructor]
         public ApplicationState(IDepartmentService departmentService, ISettingService settingService,
-            ICacheService cacheService)
+            ICacheService cacheService, IExpressionService expressionService)
         {
             _screenState = new StateMachine<AppScreens, AppScreens>(() => ActiveAppScreen, state => ActiveAppScreen = state);
             _screenState.OnUnhandledTrigger(HandleTrigger);
             _departmentService = departmentService;
             _settingService = settingService;
             _cacheService = cacheService;
+            _expressionService = expressionService;
+
             CurrentTicketType = TicketType.Default;
         }
 
@@ -44,8 +47,9 @@ namespace Samba.Presentation.Common.Services
         public AppScreens ActiveAppScreen { get; private set; }
         public CurrentDepartmentData CurrentDepartment { get; private set; }
         public TicketType CurrentTicketType { get; set; }
+        public TicketType TempTicketType { get; set; }
         public EntityScreen SelectedEntityScreen { get; private set; }
-        public EntityScreen ActiveEntityScreen { get; set; }
+        public EntityScreen TempEntityScreen { get; set; }
 
         private bool _isLocked;
         public bool IsLocked
@@ -98,6 +102,7 @@ namespace Samba.Presentation.Common.Services
             {
                 CurrentDepartment = new CurrentDepartmentData { Model = department };
                 CurrentDepartment.Model.PublishEvent(EventTopicNames.SelectedDepartmentChanged);
+                SetCurrentTicketType(_cacheService.GetTicketTypeById(CurrentDepartment.TicketTypeId));
             }
         }
 
@@ -108,6 +113,7 @@ namespace Samba.Presentation.Common.Services
 
         public void SetCurrentApplicationScreen(AppScreens appScreen)
         {
+            InteractionService.ClearMouseClickQueue();
             _screenState.Fire(appScreen);
         }
 
@@ -119,11 +125,11 @@ namespace Samba.Presentation.Common.Services
 
         public EntityScreen SetSelectedEntityScreen(EntityScreen entityScreen)
         {
-            if (IsLocked && ActiveEntityScreen == null) ActiveEntityScreen = SelectedEntityScreen;
-            else if (!IsLocked && ActiveEntityScreen != null)
+            if (IsLocked && TempEntityScreen == null) TempEntityScreen = SelectedEntityScreen;
+            else if (!IsLocked && TempEntityScreen != null)
             {
-                entityScreen = ActiveEntityScreen;
-                ActiveEntityScreen = null;
+                entityScreen = TempEntityScreen;
+                TempEntityScreen = null;
             }
             SelectedEntityScreen = entityScreen;
             return entityScreen;
@@ -140,16 +146,13 @@ namespace Samba.Presentation.Common.Services
             _settingService.ReadLocalSetting("NUMBERPAD").StringValue = value;
         }
 
-        public IEnumerable<PaidItem> LastPaidItems { get; private set; }
-
-        public void SetLastPaidItems(IEnumerable<PaidItem> paidItems)
-        {
-            LastPaidItems = paidItems;
-        }
-
         public void SetCurrentTicketType(TicketType ticketType)
         {
-            CurrentTicketType = ticketType ?? TicketType.Default;
+            if (ticketType != CurrentTicketType)
+            {
+                CurrentTicketType = ticketType ?? TicketType.Default;
+                CurrentTicketType.PublishEvent(EventTopicNames.TicketTypeChanged);
+            }
         }
 
         public string NumberPadValue
@@ -178,6 +181,7 @@ namespace Samba.Presentation.Common.Services
             _cacheService.ResetCache();
             _departmentService.ResetCache();
             _settingService.ResetCache();
+            _expressionService.ResetCache();
             _lastTwoWorkPeriods = null;
             _terminal = null;
         }

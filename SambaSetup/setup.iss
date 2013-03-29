@@ -2,35 +2,11 @@
 
 #include "scripts\products\winversion.iss"
 #include "scripts\products\fileversion.iss"
-//#include "scripts\products\iis.iss"
-//#include "scripts\products\kb835732.iss"
-
-//#include "scripts\products\msi20.iss"
 #include "scripts\products\msi31.iss"
-//#include "scripts\products\ie6.iss"
-
-//#include "scripts\products\dotnetfx11.iss"
-//#include "scripts\products\dotnetfx11lp.iss"
-//#include "scripts\products\dotnetfx11sp1.iss"
-
-//#include "scripts\products\dotnetfx20.iss"
-//#include "scripts\products\dotnetfx20lp.iss"
-//#include "scripts\products\dotnetfx20sp1.iss"
-//#include "scripts\products\dotnetfx20sp1lp.iss"
-
-//#include "scripts\products\dotnetfx35.iss"
-//#include "scripts\products\dotnetfx35lp.iss"
-//#include "scripts\products\dotnetfx35sp1.iss"
-//#include "scripts\products\dotnetfx35sp1lp.iss"
-
-//#include "scripts\products\dotnetfx40.iss"
 #include "scripts\lgpl.iss"
 #include "scripts\products\ssce40.iss"
 #include "scripts\products\dotnetfx40client.iss"
 #include "scripts\products\wic.iss"
-
-//#include "scripts\products\mdac28.iss"
-//#include "scripts\products\jet4sp8.iss"
 
 [CustomMessages]
 win2000sp3_title=Windows 2000 Service Pack 3
@@ -50,20 +26,23 @@ tr.sample_data=Örnek Veri
 tr.handheld_terminal_app=El terminali uygulamasý
 tr.ce_install_sp3_required=Compact SQL 4.0 çalýþtýrmak için Service Pack 3 gerektiðinden kurulum listesinden kaldýrýldý. Program TXT dosya veritabaný üzerinden çalýþacak.
 
+#define Version "3.03 "
+#define FileVersion "303"
+
 [Setup]
 AppName=SambaPOS
 Uninstallable=true
 DirExistsWarning=no
 CreateAppDir=true
 OutputDir=bin
-OutputBaseFilename=SambaSetup{#FileVersion}
+OutputBaseFilename=SambaSetup{#FileVersion}_Beta
 SourceDir=.
-AppCopyright=Copyright © Özgü Teknoloji 2011
+AppCopyright=Copyright © Açýk Yazýlým Platformu 2013
 AppVerName=Samba POS {#Version}
 
 DefaultGroupName=SambaPOS3
 AllowNoIcons=true
-AppPublisher=Özgü Teknoloji
+AppPublisher=Açýk Yazýlým
 AppVersion={#Version}
 UninstallDisplayIcon={app}\Samba.Presentation.exe
 UninstallDisplayName=SambaPOS3
@@ -71,8 +50,8 @@ UsePreviousGroup=true
 UsePreviousAppDir=true
 DefaultDirName={pf}\SambaPOS3
 VersionInfoVersion={#Version}
-VersionInfoCompany=Özgü Teknoloji
-VersionInfoCopyright=Copyright © Ozgu 2010
+VersionInfoCompany=Açýk Yazýlým
+VersionInfoCopyright=Copyright © AYP 2010
 ShowUndisplayableLanguages=false
 LanguageDetectionMethod=locale
 InternalCompressLevel=fast
@@ -80,7 +59,6 @@ SolidCompression=true
 Compression=lzma/fast
 
 ;required by products
-MinVersion=5.0
 PrivilegesRequired=admin
 ArchitecturesAllowed=
 VersionInfoProductName=Samba POS Setup
@@ -166,7 +144,7 @@ Source: src\Omu.ValueInjecter.dll; DestDir: {app}; Flags: ignoreversion
 Source: src\ICSharpCode.AvalonEdit.dll; DestDir: {app}; Flags: ignoreversion
 Source: src\FluentScript.dll; DestDir: {app}; Flags: ignoreversion
 Source: src\Stateless.dll; DestDir: {app}; Flags: ignoreversion
-Source: src\migrate.txt; DestDir: {userappdata}\Ozgu Tech\SambaPOS2; Flags: ignoreversion
+Source: src\migrate.txt; DestDir: {userappdata}\Ozgu Tech\SambaPOS3; Flags: ignoreversion
 Source: C:\Windows\Fonts\lucon.ttf; DestDir: {fonts}; Flags: onlyifdoesntexist uninsneveruninstall; FontInstall: Lucida Console
 Source: src\Samba.Localization.dll; DestDir: {app}; Flags: ignoreversion
 Source: src\tr\Samba.Localization.resources.dll; DestDir: {app}\tr\; Flags: ignoreversion
@@ -174,6 +152,11 @@ Source: src\it\Samba.Localization.resources.dll; DestDir: {app}\it\; Flags: igno
 Source: src\pt-BR\Samba.Localization.resources.dll; DestDir: {app}\pt-BR\; Flags: ignoreversion
 Source: src\hr\Samba.Localization.resources.dll; DestDir: {app}\hr\; Flags: ignoreversion
 Source: src\ar\Samba.Localization.resources.dll; DestDir: {app}\ar\; Flags: ignoreversion
+Source: src\hu\Samba.Localization.resources.dll; DestDir: {app}\hu\; Flags: ignoreversion
+Source: src\es\Samba.Localization.resources.dll; DestDir: {app}\es\; Flags: ignoreversion
+Source: src\id\Samba.Localization.resources.dll; DestDir: {app}\id\; Flags: ignoreversion
+Source: src\el\Samba.Localization.resources.dll; DestDir: {app}\el\; Flags: ignoreversion
+Source: src\zh-CN\Samba.Localization.resources.dll; DestDir: {app}\zh-CN\; Flags: ignoreversion
 
 [Components]
 Name: pos; Description: Samba POS; Types: full compact custom; Flags: fixed
@@ -274,4 +257,13 @@ Name: {app}\it
 Name: {app}\pt-BR
 Name: {app}\hr
 Name: {app}\ar
+Name: {app}\hu
+Name: {app}\es
+Name: {app}\id
+Name: {app}\el
+Name: {app}\zh-CN
 Name: {commonappdata}\Ozgu Tech\SambaPOS3
+
+[Registry]
+Root: HKLM; Subkey: SOFTWARE\Microsoft\Internet Explorer\MAIN\FeatureControl\FEATURE_BROWSER_EMULATION; ValueType: dword; ValueName: samba.presentation.exe; ValueData: 10000
+

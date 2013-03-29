@@ -7,7 +7,6 @@ using System.Linq;
 using FluentMigrator.Runner;
 using FluentMigrator.Runner.Announcers;
 using FluentMigrator.Runner.Initialization;
-using Microsoft.Win32;
 using Samba.Infrastructure.Data;
 using Samba.Infrastructure.Data.SQL;
 using Samba.Infrastructure.Data.Text;
@@ -59,8 +58,7 @@ namespace Samba.Persistance.Data
                 if (cs.ToLower(CultureInfo.InvariantCulture).Contains("user id") &&
                     !cs.ToLower().Contains("persist security info"))
                     cs += " Persist Security Info=True;";
-                Database.DefaultConnectionFactory =
-                    new SqlConnectionFactory(cs);
+                Database.DefaultConnectionFactory = new SqlConnectionFactory(cs);
             }
         }
 
@@ -99,25 +97,25 @@ namespace Samba.Persistance.Data
 
     public class Initializer : IDatabaseInitializer<SambaContext>
     {
-        
+
         public void InitializeDatabase(SambaContext context)
         {
             if (!context.Database.Exists())
             {
                 Create(context);
             }
-            //#if DEBUG
-            else if (!context.Database.CompatibleWithModel(false))
+//#if DEBUG
+//            else if (!context.Database.CompatibleWithModel(false))
+//            {
+//                context.Database.Delete();
+//                Create(context);
+//            }
+//#else
+            else
             {
-                context.Database.Delete();
-                Create(context);
+                Migrate(context);
             }
-            //#else
-            //            else
-            //            {
-            //                Migrate(context);
-            //            }
-            //#endif
+//#endif
             var version = context.ObjContext().ExecuteStoreQuery<long>("select top(1) Version from VersionInfo order by version desc").FirstOrDefault();
             LocalSettings.CurrentDbVersion = version;
         }
@@ -145,19 +143,19 @@ namespace Samba.Persistance.Data
 
             var db = context.Database.Connection.ConnectionString.Contains(".sdf") ? "sqlserverce" : "sqlserver";
 
-            using (IAnnouncer announcer = new TextWriterAnnouncer(Console.Out))
-            {
-                IRunnerContext migrationContext =
-                    new RunnerContext(announcer)
-                    {
-                        Connection = context.Database.Connection.ConnectionString,
-                        Database = db,
-                        Target = LocalSettings.AppPath + "\\Samba.Persistance.DbMigration.dll"
-                    };
+            IAnnouncer announcer = new TextWriterAnnouncer(Console.Out);
 
-                var executor = new TaskExecutor(migrationContext);
-                executor.Execute();
-            }
+            IRunnerContext migrationContext =
+                new RunnerContext(announcer)
+                {
+                    ApplicationContext = context,
+                    Connection = context.Database.Connection.ConnectionString,
+                    Database = db,
+                    Target = LocalSettings.AppPath + "\\Samba.Persistance.DbMigration.dll"
+                };
+
+            new TaskExecutor(migrationContext).Execute();
+
             File.Delete(LocalSettings.UserPath + "\\migrate.txt");
         }
     }

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Samba.Infrastructure.Data;
-using System;
 
 namespace Samba.Domain.Models.Accounts
 {
@@ -25,16 +24,18 @@ namespace Samba.Domain.Models.Accounts
 
         public int MasterAccountTypeId { get; set; }
 
-        private readonly IList<AccountTransactionType> _transactionTypes;
+        private IList<AccountTransactionType> _transactionTypes;
         public virtual IList<AccountTransactionType> TransactionTypes
         {
             get { return _transactionTypes; }
+            set { _transactionTypes = value; }
         }
 
-        private readonly IList<AccountTransactionDocumentTypeMap> _accountTransactionDocumentTypeMaps;
+        private IList<AccountTransactionDocumentTypeMap> _accountTransactionDocumentTypeMaps;
         public virtual IList<AccountTransactionDocumentTypeMap> AccountTransactionDocumentTypeMaps
         {
             get { return _accountTransactionDocumentTypeMaps; }
+            set { _accountTransactionDocumentTypeMaps = value; }
         }
 
         private IList<AccountTransactionDocumentAccountMap> _accountTransactionDocumentAccountMaps;
@@ -58,34 +59,26 @@ namespace Samba.Domain.Models.Accounts
 
         public AccountTransactionDocument CreateDocument(Account account, string description, decimal amount, decimal exchangeRate, IList<Account> accounts)
         {
-            // <pex>
-            if (account == null)
-                throw new ArgumentNullException("account");
-            if (account.AccountTypeId != MasterAccountTypeId)
-                throw new ArgumentException("Account Type should match Master Account Type");
-            // </pex>
-
             var result = new AccountTransactionDocument { Name = Name };
             foreach (var accountTransactionType in TransactionTypes)
             {
                 var transaction = AccountTransaction.Create(accountTransactionType);
                 transaction.Name = description;
                 transaction.UpdateAmount(amount, exchangeRate);
-                transaction.UpdateAccounts(MasterAccountTypeId, account.Id);
+                transaction.UpdateAccount(MasterAccountTypeId, account.Id);
                 if (accounts != null && accounts.Count > 0)
                 {
                     if (transaction.SourceAccountTypeId != MasterAccountTypeId &&
                         transaction.SourceTransactionValue.AccountId == 0)
                     {
-                        Account ac =
-                            accounts.FirstOrDefault(x => x.AccountTypeId == transaction.SourceAccountTypeId);
+                        var ac = accounts.FirstOrDefault(x => x.AccountTypeId == transaction.SourceAccountTypeId);
                         if (ac != null) transaction.SetSourceAccount(ac.AccountTypeId, ac.Id);
                     }
+
                     if (transaction.TargetAccountTypeId != MasterAccountTypeId &&
                         transaction.TargetTransactionValue.AccountId == 0)
                     {
-                        Account ac =
-                            accounts.FirstOrDefault(x => x.AccountTypeId == transaction.TargetAccountTypeId);
+                        var ac = accounts.FirstOrDefault(x => x.AccountTypeId == transaction.TargetAccountTypeId);
                         if (ac != null) transaction.SetTargetAccount(ac.AccountTypeId, ac.Id);
                     }
                 }

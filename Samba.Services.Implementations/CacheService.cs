@@ -475,7 +475,7 @@ namespace Samba.Services.Implementations
 
         public EntityType GetEntityTypeById(int entityTypeId)
         {
-            return EntityTypes.Single(x => x.Id == entityTypeId);
+            return EntityTypes.SingleOrDefault(x => x.Id == entityTypeId);
         }
 
         public int GetEntityTypeIdByEntityName(string entityName)
@@ -493,6 +493,17 @@ namespace Samba.Services.Implementations
         public IEnumerable<Warehouse> GetWarehouses()
         {
             return Warehouses;
+        }
+
+        private IEnumerable<InventoryTransactionType> _inventoryTransactionTypes;
+        public IEnumerable<InventoryTransactionType> InventoryTransactionTypes
+        {
+            get { return _inventoryTransactionTypes??(_inventoryTransactionTypes = _dataService.GetInventoryTransactionTypes()); }
+        }
+
+        public IEnumerable<InventoryTransactionType> GetInventoryTransactionTypes()
+        {
+            return InventoryTransactionTypes;
         }
 
         private IEnumerable<Printer> _printers;
@@ -559,6 +570,7 @@ namespace Samba.Services.Implementations
         public void ResetCache()
         {
             _dataService.ResetCache();
+            _inventoryTransactionTypes = null;
             _warehouses = null;
             _printers = null;
             _printerTemplates = null;

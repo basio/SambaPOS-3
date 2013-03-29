@@ -32,16 +32,17 @@ namespace Samba.Services.Implementations.PrinterModule
             _ticketFormatter = new TicketFormatter(expressionService, settingService);
         }
 
-        private IEnumerable<Printer> _printers;
+        [ImportMany]
+        public IEnumerable<IPrinterProcessor> PrinterProcessors { get; set; }
+
         public IEnumerable<Printer> Printers
         {
-            get { return _printers ?? (_printers = _cacheService.GetPrinters()); }
+            get { return _cacheService.GetPrinters(); }
         }
 
-        private IEnumerable<PrinterTemplate> _printerTemplates;
         protected IEnumerable<PrinterTemplate> PrinterTemplates
         {
-            get { return _printerTemplates ?? (_printerTemplates = _cacheService.GetPrinterTemplates()); }
+            get { return _cacheService.GetPrinterTemplates(); }
         }
 
         public Printer PrinterById(int id)
@@ -57,6 +58,11 @@ namespace Samba.Services.Implementations.PrinterModule
         public IEnumerable<string> GetPrinterNames()
         {
             return PrinterInfo.GetPrinterNames();
+        }
+
+        public IEnumerable<string> GetProcessorNames()
+        {
+            return PrinterProcessors.Select(x => x.Name);
         }
 
         private PrinterMap GetPrinterMapForItem(IEnumerable<PrinterMap> printerMaps, int menuItemId)
@@ -211,22 +217,27 @@ namespace Samba.Services.Implementations.PrinterModule
             }
         }
 
-        private void PrintOrderLines(Ticket ticket, IEnumerable<Order> lines, PrinterMap p)
+        private void PrintOrderLines(Ticket ticket, IEnumerable<Order> orders, PrinterMap map)
         {
-            Debug.Assert(lines != null, "lines != null");
-            var lns = lines.ToList();
+            Debug.Assert(orders != null, "orders != null");
+            var lns = orders.ToList();
             if (!lns.Any()) return;
-            if (p == null)
+            if (map == null)
             {
                 MessageBox.Show(Resources.GeneralPrintErrorMessage);
                 _logService.Log(Resources.GeneralPrintErrorMessage);
                 return;
             }
-            var printer = PrinterById(p.PrinterId);
-            var prinerTemplate = PrinterTemplateById(p.PrinterTemplateId);
+            var printer = PrinterById(map.PrinterId);
+            var prinerTemplate = PrinterTemplateById(map.PrinterTemplateId);
             if (printer == null || string.IsNullOrEmpty(printer.ShareName) || prinerTemplate == null) return;
             var ticketLines = _ticketFormatter.GetFormattedTicket(ticket, lns, prinerTemplate);
-            PrintJobFactory.CreatePrintJob(printer).DoPrint(ticketLines);
+
+            var processor = GetPrinterProcessor(printer.ShareName);
+            if (processor != null)
+                ticketLines = processor.Process(ticket, lns, ticketLines);
+            if (ticketLines != null)
+                PrintJobFactory.CreatePrintJob(printer).DoPrint(ticketLines);
         }
 
         public void PrintReport(FlowDocument document, Printer printer)
@@ -246,6 +257,11 @@ namespace Samba.Services.Implementations.PrinterModule
             }
         }
 
+        public IPrinterProcessor GetPrinterProcessor(string processorName)
+        {
+            return PrinterProcessors.FirstOrDefault(x => x.Name == processorName);
+        }
+
         public IDictionary<string, string> GetTagDescriptions()
         {
             return FunctionRegistry.Descriptions;
@@ -253,8 +269,6 @@ namespace Samba.Services.Implementations.PrinterModule
 
         public void ResetCache()
         {
-            _printers = null;
-            _printerTemplates = null;
             PrinterInfo.ResetCache();
         }
     }

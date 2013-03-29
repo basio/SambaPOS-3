@@ -15,16 +15,18 @@ namespace Samba.Domain.Models.Inventory
             _costItems = new List<CostItem>();
         }
 
-        private readonly IList<PeriodicConsumptionItem> _periodicConsumptionItems;
+        private IList<PeriodicConsumptionItem> _periodicConsumptionItems;
         public virtual IList<PeriodicConsumptionItem> PeriodicConsumptionItems
         {
             get { return _periodicConsumptionItems; }
+            set { _periodicConsumptionItems = value; }
         }
 
-        private readonly IList<CostItem> _costItems;
+        private IList<CostItem> _costItems;
         public virtual IList<CostItem> CostItems
         {
             get { return _costItems; }
+            set { _costItems = value; }
         }
 
         private void UpdateConsumption(RecipeItem recipeItem, decimal saleTotal)
@@ -80,7 +82,7 @@ namespace Samba.Domain.Models.Inventory
             pci.Purchase = tim.Where(x => x.TargetWarehouseId == WarehouseId).Sum(x => x.Quantity * x.Multiplier) / pci.UnitMultiplier;
             pci.Purchase -= tim.Where(x => x.SourceWarehouseId == WarehouseId).Sum(x => x.Quantity * x.Multiplier) / pci.UnitMultiplier;
             var totalPrice = tim.Sum(x => x.Price * x.Quantity);
-            if (pci.InStock > 0 || pci.Purchase > 0)
+            if (pci.InStock + pci.Purchase > 0)
                 pci.Cost = decimal.Round((totalPrice + previousCost) / (pci.InStock + pci.Purchase), 2);
         }
 

@@ -116,7 +116,7 @@ namespace Samba.Domain.Tests
         [Test]
         public void CanCalculateTicket()
         {
-            var ticket = Ticket.Create(Department.Default, TicketType, ReceivableAccount, 1, null);
+            var ticket = Ticket.Create(Department.Default, TicketType, 1, null);
             var order = ticket.AddOrder(AccountTransactionType.Default, Department.Default, "Emre", Pizza, null, Pizza.Portions[0], "", null);
             ticket.Recalculate();
             Assert.AreEqual(10, order.GetVisibleValue());
@@ -126,7 +126,7 @@ namespace Samba.Domain.Tests
         [Test]
         public void CanCalculateTax()
         {
-            var ticket = Ticket.Create(Department.Default, TicketType, ReceivableAccount, 1, null);
+            var ticket = Ticket.Create(Department.Default, TicketType, 1, null);
             var order = ticket.AddOrder(AccountTransactionType.Default, Department.Default, "Emre", Pizza, GetTaxTemplates(Pizza.Id), Pizza.Portions[0], "", null);
             ticket.Recalculate();
             Assert.AreEqual(10, order.GetVisibleValue());
@@ -137,7 +137,7 @@ namespace Samba.Domain.Tests
         [Test]
         public void CanCalculateTaxWhenVoidExists()
         {
-            var ticket = Ticket.Create(Department.Default, TicketType, ReceivableAccount, 1, null);
+            var ticket = Ticket.Create(Department.Default, TicketType, 1, null);
             ticket.AddOrder(AccountTransactionType.Default, Department.Default, "Emre", Pizza, GetTaxTemplates(Pizza.Id), Pizza.Portions[0], "", null);
             ticket.Recalculate();
             Assert.AreEqual(2, ticket.GetTaxTotal());
@@ -156,21 +156,21 @@ namespace Samba.Domain.Tests
         [Test]
         public void CanCalculateExcludedTax()
         {
-            var ticket = Ticket.Create(Department.Default, TicketType, ReceivableAccount, 1, null);
+            var ticket = Ticket.Create(Department.Default, TicketType, 1, null);
             ticket.TaxIncluded = false;
             var order = ticket.AddOrder(TicketType.SaleTransactionType, Department.Default, "Emre", Pizza, GetTaxTemplates(Pizza.Id), Pizza.Portions[0], "", null);
             ticket.Recalculate();
             Assert.AreEqual(10, order.GetVisibleValue());
             Assert.AreEqual(10, order.GetTotal());
             Assert.AreEqual(12.5, ticket.GetSum());
-            Assert.AreEqual(12.5, ticket.TransactionDocument.AccountTransactions.Where(x => x.TargetAccountTypeId == 3).Sum(x => x.Amount));
+            Assert.AreEqual(12.5, ticket.TransactionDocument.AccountTransactions.Where(x => x.TargetAccountTypeId == 3).Sum(x => x.Amount) - ticket.TransactionDocument.AccountTransactions.Where(x => x.SourceAccountTypeId == 3).Sum(x => x.Amount));
         }
 
         [Test]
         public void CanCalculateDoubleMultipleTax()
         {
             const decimal orderQuantiy = 2;
-            var ticket = Ticket.Create(Department.Default, TicketType, ReceivableAccount, 1, null);
+            var ticket = Ticket.Create(Department.Default, TicketType, 1, null);
             var order = ticket.AddOrder(AccountTransactionType.Default, Department.Default, "Emre", Beer, GetTaxTemplates(Beer.Id), Pizza.Portions[0], "", null);
             order.Quantity = orderQuantiy;
             ticket.Recalculate();
@@ -188,7 +188,7 @@ namespace Samba.Domain.Tests
         [Test]
         public void CanCalculateDoubleOrdersMultipleTax()
         {
-            var ticket = Ticket.Create(Department.Default, TicketType, ReceivableAccount, 1, null);
+            var ticket = Ticket.Create(Department.Default, TicketType, 1, null);
             var order1 = ticket.AddOrder(TicketType.SaleTransactionType, Department.Default, "Emre", Beer, GetTaxTemplates(Beer.Id), Pizza.Portions[0], "", null);
             var order2 = ticket.AddOrder(TicketType.SaleTransactionType, Department.Default, "Emre", Pizza, GetTaxTemplates(Pizza.Id), Pizza.Portions[0], "", null);
             order2.UpdatePrice(5, "");
@@ -209,7 +209,7 @@ namespace Samba.Domain.Tests
         [Test]
         public void CanCalculateDoubleOrdersMultipleTaxWithOrderTag()
         {
-            var ticket = Ticket.Create(Department.Default, TicketType, ReceivableAccount, 1, null);
+            var ticket = Ticket.Create(Department.Default, TicketType, 1, null);
             var order1 = ticket.AddOrder(TicketType.SaleTransactionType, Department.Default, "Emre", Beer, GetTaxTemplates(Beer.Id), Pizza.Portions[0], "", null);
             var order2 = ticket.AddOrder(TicketType.SaleTransactionType, Department.Default, "Emre", Pizza, GetTaxTemplates(Pizza.Id), Pizza.Portions[0], "", null);
             order2.ToggleOrderTag(new OrderTagGroup { AddTagPriceToOrderPrice = true }, new OrderTag { Price = 5 }, 1, "");
@@ -231,7 +231,7 @@ namespace Samba.Domain.Tests
         [Test]
         public void CanCalculateDoubleOrdersMultipleTaxWithMultipleOrderTag()
         {
-            var ticket = Ticket.Create(Department.Default, TicketType, ReceivableAccount, 1, null);
+            var ticket = Ticket.Create(Department.Default, TicketType, 1, null);
             var order1 = ticket.AddOrder(TicketType.SaleTransactionType, Department.Default, "Emre", Beer, GetTaxTemplates(Beer.Id), Pizza.Portions[0], "", null);
             var order2 = ticket.AddOrder(TicketType.SaleTransactionType, Department.Default, "Emre", Pizza, GetTaxTemplates(Pizza.Id), Pizza.Portions[0], "", null);
             order2.ToggleOrderTag(new OrderTagGroup { Name = "OT1", Id = 1, AddTagPriceToOrderPrice = true }, new OrderTag { Name = "t1", Id = 1, Price = 5 }, 1, "");
@@ -255,7 +255,7 @@ namespace Samba.Domain.Tests
         public void CanCalculateDiscountTax()
         {
             const decimal orderQuantiy = 1;
-            var ticket = Ticket.Create(Department.Default, TicketType, ReceivableAccount, 1, null);
+            var ticket = Ticket.Create(Department.Default, TicketType, 1, null);
             var order = ticket.AddOrder(TicketType.SaleTransactionType, Department.Default, "Emre", Beer, GetTaxTemplates(Beer.Id), Pizza.Portions[0], "", null);
             order.Quantity = orderQuantiy;
             ticket.AddCalculation(new CalculationType { AccountTransactionType = DiscountTransactionType, Amount = 10, DecreaseAmount = true }, 10);
@@ -269,13 +269,13 @@ namespace Samba.Domain.Tests
             Assert.AreEqual(expLcTax * orderQuantiy, ticket.TransactionDocument.AccountTransactions.Single(x => x.AccountTransactionTypeId == 2).Amount);
             Assert.AreEqual(expStTax * orderQuantiy, ticket.TransactionDocument.AccountTransactions.Single(x => x.AccountTransactionTypeId == 3).Amount);
             Assert.AreEqual(0, ticket.TransactionDocument.AccountTransactions.Sum(x => x.AccountTransactionValues.Sum(y => y.Debit - y.Credit)));
-            Assert.AreEqual(9, ticket.TransactionDocument.AccountTransactions.Where(x => x.TargetAccountTypeId == 3).Sum(x => x.Amount));
+            Assert.AreEqual(9, ticket.TransactionDocument.AccountTransactions.Where(x => x.TargetAccountTypeId == 3).Sum(x => x.Amount) - ticket.TransactionDocument.AccountTransactions.Where(x => x.SourceAccountTypeId == 3).Sum(x => x.Amount));
         }
 
         [Test]
         public void CanCalculateExcludedTaxWhenDiscountExists()
         {
-            var ticket = Ticket.Create(Department.Default, TicketType, ReceivableAccount, 1, null);
+            var ticket = Ticket.Create(Department.Default, TicketType, 1, null);
             ticket.TaxIncluded = false;
             var order = ticket.AddOrder(TicketType.SaleTransactionType, Department.Default, "Emre", Pizza, GetTaxTemplates(Pizza.Id), Pizza.Portions[0], "", null);
             ticket.AddCalculation(new CalculationType { AccountTransactionType = DiscountTransactionType, Amount = 10, DecreaseAmount = true }, 10);
@@ -283,13 +283,13 @@ namespace Samba.Domain.Tests
             Assert.AreEqual(10, order.GetVisibleValue());
             Assert.AreEqual(10, order.GetTotal());
             Assert.AreEqual(11.25, ticket.GetSum());
-            Assert.AreEqual(11.25, ticket.TransactionDocument.AccountTransactions.Where(x => x.TargetAccountTypeId == 3).Sum(x => x.Amount));
+            Assert.AreEqual(11.25, ticket.TransactionDocument.AccountTransactions.Where(x => x.TargetAccountTypeId == 3).Sum(x => x.Amount) - ticket.TransactionDocument.AccountTransactions.Where(x => x.SourceAccountTypeId == 3).Sum(x => x.Amount));
         }
 
         [Test]
         public void CanCalculateMultipleOrderExcludedTaxWhenDiscountExists()
         {
-            var ticket = Ticket.Create(Department.Default, TicketType, ReceivableAccount, 1, null);
+            var ticket = Ticket.Create(Department.Default, TicketType, 1, null);
             ticket.TaxIncluded = false;
             var order1 = ticket.AddOrder(TicketType.SaleTransactionType, Department.Default, "Emre", Pizza, GetTaxTemplates(Pizza.Id), Pizza.Portions[0], "", null);
             var order2 = ticket.AddOrder(TicketType.SaleTransactionType, Department.Default, "Emre", Pizza, GetTaxTemplates(Pizza.Id), Pizza.Portions[0], "", null);
@@ -298,7 +298,29 @@ namespace Samba.Domain.Tests
             Assert.AreEqual(10, order1.GetVisibleValue());
             Assert.AreEqual(10, order2.GetTotal());
             Assert.AreEqual(22.50, ticket.GetSum());
-            Assert.AreEqual(22.50, ticket.TransactionDocument.AccountTransactions.Where(x => x.TargetAccountTypeId == 3).Sum(x => x.Amount));
+            Assert.AreEqual(22.50, ticket.TransactionDocument.AccountTransactions.Where(x => x.TargetAccountTypeId == 3).Sum(x => x.Amount) - ticket.TransactionDocument.AccountTransactions.Where(x => x.SourceAccountTypeId == 3).Sum(x => x.Amount));
+        }
+
+        [Test]
+        public void CanVoidAll()
+        {
+            var ticket = Ticket.Create(Department.Default, TicketType, 1, null);
+            ticket.TaxIncluded = false;
+            var order1 = ticket.AddOrder(TicketType.SaleTransactionType, Department.Default, "Emre", Pizza, GetTaxTemplates(Pizza.Id), Pizza.Portions[0], "", null);
+            var order2 = ticket.AddOrder(TicketType.SaleTransactionType, Department.Default, "Emre", Pizza, GetTaxTemplates(Pizza.Id), Pizza.Portions[0], "", null);
+            ticket.AddCalculation(new CalculationType { AccountTransactionType = DiscountTransactionType, Amount = 10, DecreaseAmount = true }, 10);
+            ticket.Recalculate();
+            Assert.AreEqual(10, order1.GetVisibleValue());
+            Assert.AreEqual(10, order2.GetTotal());
+            Assert.AreEqual(22.50, ticket.GetSum());
+            Assert.AreEqual(22.50, ticket.TransactionDocument.AccountTransactions.Where(x => x.TargetAccountTypeId == 3).Sum(x => x.Amount) - ticket.TransactionDocument.AccountTransactions.Where(x => x.SourceAccountTypeId == 3).Sum(x => x.Amount));
+            ticket.RemoveCalculation(ticket.Calculations[0]);
+            order1.CalculatePrice = false;
+            ticket.Recalculate();
+            Assert.AreEqual(12.5, ticket.TransactionDocument.AccountTransactions.Sum(x => x.Amount));
+            order2.CalculatePrice = false;
+            ticket.Recalculate();
+            Assert.AreEqual(0, ticket.TransactionDocument.AccountTransactions.Sum(x => x.Amount));
         }
     }
 }

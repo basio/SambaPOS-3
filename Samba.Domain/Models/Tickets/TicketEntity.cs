@@ -12,6 +12,7 @@ namespace Samba.Domain.Models.Tickets
         public int EntityTypeId { get; set; }
         public int EntityId { get; set; }
         public int AccountId { get; set; }
+        public int AccountTypeId { get; set; }
         public string EntityName { get; set; }
         public string EntityCustomData { get; set; }
 
@@ -19,8 +20,9 @@ namespace Samba.Domain.Models.Tickets
         {
             if (string.IsNullOrEmpty(EntityCustomData)) return "";
             var pattern = string.Format("\"Name\":\"{0}\",\"Value\":\"([^\"]+)\"", fieldName);
+            
             return Regex.IsMatch(EntityCustomData, pattern)
-                ? Regex.Match(EntityCustomData, pattern).Groups[1].Value : "";
+                ? Regex.Unescape(Regex.Match(EntityCustomData, pattern).Groups[1].Value) : "";
         }
 
         public string GetCustomDataFormat(string fieldName, string format)
@@ -32,8 +34,9 @@ namespace Samba.Domain.Models.Tickets
         public decimal GetCustomDataAsDecimal(string fieldName)
         {
             decimal result;
-            decimal.TryParse(GetCustomData(fieldName), out result);
-            return result;
+            if (decimal.TryParse(GetCustomData(fieldName), out result))
+                return result;
+            return 0;
         }
     }
 }

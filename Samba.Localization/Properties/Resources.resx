@@ -3068,4 +3068,46 @@ Error Message:
   <data name="SambaMarket" xml:space="preserve">
     <value>Samba Market</value>
   </data>
+  <data name="Source">
+    <value xml:space="preserve">Source</value>
+  </data>
+  <data name="Target">
+    <value xml:space="preserve">Target</value>
+  </data>
+  <data name="OrderMoved" xml:space="preserve">
+    <value>Order Moved</value>
+  </data>
+  <data name="TicketMoved" xml:space="preserve">
+    <value>Ticket Moved</value>
+  </data>
+  <data name="Ticket Moving" xml:space="preserve">
+    <value>Ticket Moving</value>
+  </data>
+  <data name="TicketMovedRule" xml:space="preserve">
+    <value>Ticket Moved Rule</value>
+  </data>
+  <data name="UpdateTicketStatus" xml:space="preserve">
+    <value>Update Ticket Status</value>
+  </data>
+  <data name="UpdateMergedTicketsState" xml:space="preserve">
+    <value>Update Merged Tickets State</value>
+  </data>
+  <data name="UsePlainSum" xml:space="preserve">
+    <value>Use Plain Sum</value>
+  </data>
+  <data name="Toggle" xml:space="preserve">
+    <value>Toggle</value>
+  </data>
+  <data name="SetActiveTicketType" xml:space="preserve">
+    <value>Set Active Ticket Type</value>
+  </data>
+  <data name="EntitySelected" xml:space="preserve">
+    <value>Entity Selected</value>
+  </data>
+  <data name="AskTicketType" xml:space="preserve">
+    <value>Ask Ticket Type</value>
+  </data>
+  <data name="PrintReport" xml:space="preserve">
+    <value>Print Report</value>
+  </data>
 </root>

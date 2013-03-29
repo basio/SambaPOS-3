@@ -654,6 +654,9 @@ Mesaj:
   <data name="UserSales" xml:space="preserve">
     <value>Kullanıcı Bazlı Satışlar</value>
   </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>Kontrol Paneli</value>
+  </data>
   <data name="ExpressionValid" xml:space="preserve">
     <value>Deyim Geçerli</value>
   </data>
@@ -799,6 +802,9 @@ Mesaj:
   <data name="OrderTagGroup" xml:space="preserve">
     <value>Sipariş Etiketi Grubu</value>
   </data>
+  <data name="SambaMarket" xml:space="preserve">
+    <value>Samba Market</value>
+  </data>
   <data name="DateRangeIsNotActiveWorkPeriod" xml:space="preserve">
     <value>Tarih aralığı aktif çalışma dönemi değil.</value>
   </data>
@@ -847,6 +853,9 @@ Gizlemek için pin kodunu değiştirin</value>
   </data>
   <data name="TicketTag" xml:space="preserve">
     <value>Adisyon Etiketi</value>
+  </data>
+  <data name="Handler" xml:space="preserve">
+    <value>Denetimci</value>
   </data>
   <data name="CanMoveTicketLines" xml:space="preserve">
     <value>Adisyon satırlarını taşıyabilir</value>
@@ -1025,7 +1034,7 @@ Gizlemek için pin kodunu değiştirin</value>
 &lt;J00&gt;- {QUANTITY} {NAME}|**İKRAM**
 {ORDER TAGS}
 
-[ORDERS:İptal]
+[ORDERS:İade]
 -- Nothing will print for void lines
 
 [ORDER TAGS]
@@ -1199,6 +1208,9 @@ Gizlemek için pin kodunu değiştirin</value>
   <data name="LockTicket" xml:space="preserve">
     <value>Adisyonu Kilitle</value>
   </data>
+  <data name="OrderMoved" xml:space="preserve">
+    <value>Sipariş Taşındı</value>
+  </data>
   <data name="WorkPeriodStartTime" xml:space="preserve">
     <value>Gün başlama saati: {0}</value>
   </data>
@@ -1213,6 +1225,9 @@ Gizlemek için pin kodunu değiştirin</value>
   </data>
   <data name="Save" xml:space="preserve">
     <value>Kaydet</value>
+  </data>
+  <data name="TicketMovedRule" xml:space="preserve">
+    <value>Belge Taşındı Kuralı</value>
   </data>
   <data name="CanCreateAccount" xml:space="preserve">
     <value>Hesap Açabilir</value>
@@ -1264,7 +1279,7 @@ Gizlemek için pin kodunu değiştirin</value>
 &lt;J00&gt;- {QUANTITY} {NAME}|{PRICE}
 {ORDER TAGS}
 
-[ORDERS:İptal]
+[ORDERS:İade]
 &lt;J00&gt;- {QUANTITY} {NAME}|{PRICE}
 {ORDER TAGS}
 
@@ -1452,6 +1467,9 @@ Gizlemek için pin kodunu değiştirin</value>
   <data name="Billion" xml:space="preserve">
     <value>Milyar</value>
   </data>
+  <data name="UsePlainSum" xml:space="preserve">
+    <value>Sade Toplamı Kullan</value>
+  </data>
   <data name="TriggerName" xml:space="preserve">
     <value>Tetikleyici Adı</value>
   </data>
@@ -1482,11 +1500,17 @@ Gizlemek için pin kodunu değiştirin</value>
   <data name="CantDelete_f" xml:space="preserve">
     <value>{0} Silinemiyor</value>
   </data>
+  <data name="Source" xml:space="preserve">
+    <value>Kaynak</value>
+  </data>
   <data name="AddOrder" xml:space="preserve">
     <value>Adisyona sipariş ekle</value>
   </data>
   <data name="Fifteen" xml:space="preserve">
     <value>Onbeş</value>
+  </data>
+  <data name="UpdateTicketStatus" xml:space="preserve">
+    <value>Belge Durumunu Değiştir</value>
   </data>
   <data name="PageCount" xml:space="preserve">
     <value>Sayfa Sayısı</value>
@@ -1619,6 +1643,9 @@ Gizlemek için pin kodunu değiştirin</value>
   </data>
   <data name="BatchCreate_f" xml:space="preserve">
     <value>Toplu {0} oluştur</value>
+  </data>
+  <data name="Ticket Moving" xml:space="preserve">
+    <value>Belge Taşınıyor</value>
   </data>
   <data name="TicketDate" xml:space="preserve">
     <value>Adisyon Tarihi</value>
@@ -1838,7 +1865,7 @@ Hata Mesajı:
     <value>Restoran</value>
   </data>
   <data name="Total_f" xml:space="preserve">
-    <value>Toplam: {0}</value>
+    <value>Toplam {0}</value>
   </data>
   <data name="EntityScreen" xml:space="preserve">
     <value>Varlık Ekranı</value>
@@ -1993,6 +2020,9 @@ Hata Mesajı:
   <data name="DisplayPopup" xml:space="preserve">
     <value>Popup Görüntüle</value>
   </data>
+  <data name="TicketMoved" xml:space="preserve">
+    <value>Belge Taşındı</value>
+  </data>
   <data name="DocumentNo" xml:space="preserve">
     <value>Belge No</value>
   </data>
@@ -2031,6 +2061,9 @@ Hata Mesajı:
   </data>
   <data name="Unpaid" xml:space="preserve">
     <value>Ödenmedi</value>
+  </data>
+  <data name="Market" xml:space="preserve">
+    <value>Market</value>
   </data>
   <data name="SubButtonHeight" xml:space="preserve">
     <value>Alt Düğme Yüksekliği</value>
@@ -2096,7 +2129,7 @@ Hata Mesajı:
     <value>Mesaj Sunucusu Portu</value>
   </data>
   <data name="UpdateEntityState" xml:space="preserve">
-    <value>Var</value>
+    <value>Varlık durumunu değiştir.</value>
   </data>
   <data name="UnhandledExceptionErrorMessage" xml:space="preserve">
     <value>Samba POS Beklenmeyen bir sorunla karşılaştı. Uygulama şu anda kapatılacak. Detaylı bilgi için log dosyasını inceleyiniz</value>
@@ -2368,6 +2401,9 @@ Kapat</value>
   </data>
   <data name="SearchString" xml:space="preserve">
     <value>Arama Terimi</value>
+  </data>
+  <data name="UpdateMergedTicketsState" xml:space="preserve">
+    <value>Birleşmiş Belgelerin Durumunu Değiştir</value>
   </data>
   <data name="DisplayAllValues" xml:space="preserve">
     <value>Tümünü Göster</value>
@@ -2714,6 +2750,9 @@ Açık adisyon varken gün sonu yapılamaz.</value>
   </data>
   <data name="Every4Hours" xml:space="preserve">
     <value>4 saatte bir</value>
+  </data>
+  <data name="Target" xml:space="preserve">
+    <value>Hedef</value>
   </data>
   <data name="ColumnCount" xml:space="preserve">
     <value>Sütun Sayısı</value>

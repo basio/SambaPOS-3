@@ -145,14 +145,18 @@ html
 
         public static string SettingsFileName { get { return File.Exists(UserSettingsFileName) ? UserSettingsFileName : CommonSettingsFileName; } }
 
-        public static string DefaultCurrencyFormat { get; set; }
-        public static string DefaultQuantityFormat { get; set; }
+        public static string CurrencyFormat { get; set; }
+        public static string QuantityFormat { get; set; }
+        public static string ReportCurrencyFormat { get; set; }
+        public static string ReportQuantityFormat { get; set; }
         public static string CurrencySymbol { get { return CultureInfo.CurrentCulture.NumberFormat.CurrencySymbol; } }
 
-        public static int DbVersion { get { return 1; } }
-        public static string AppVersion { get { return "3.00 [ALPHA]"; } }
+        public static int DbVersion { get { return 3; } }
+        public static string AppVersion { get { return "3.03 BETA"; } }
         public static string AppName { get { return "SambaPOS3"; } }
-        public static IList<string> SupportedLanguages { get { return new[] { "en", "tr", "it", "pt-BR", "hr", "ar" }; } }
+
+        private static IList<string> _supportedLanguages;
+        public static IList<string> SupportedLanguages { get { return _supportedLanguages ?? (_supportedLanguages = new[] { "en", "tr", "it", "pt-BR", "hr", "ar", "hu", "es", "id", "el", "zh-CN" }); } }
 
         public static long CurrentDbVersion { get; set; }
 

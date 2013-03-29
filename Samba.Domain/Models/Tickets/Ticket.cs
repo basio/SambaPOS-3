@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -87,12 +86,25 @@ namespace Samba.Domain.Models.Tickets
         public int TicketTypeId { get; set; }
         public string Note { get; set; }
 
-        public int AccountId { get; set; }
-        public int AccountTypeId { get; set; }
-        public string AccountName { get; set; }
+        public string TicketTags
+        {
+            get { return _ticketTags; }
+            set
+            {
+                _ticketTags = value;
+                _ticketTagValues = null;
+            }
+        }
 
-        public string TicketTags { get; set; }
-        public string TicketStates { get; set; }
+        public string TicketStates
+        {
+            get { return _ticketStates; }
+            set
+            {
+                _ticketStates = value;
+                _ticketStateValues = null;
+            }
+        }
 
         public decimal ExchangeRate { get; set; }
 
@@ -143,13 +155,16 @@ namespace Samba.Domain.Models.Tickets
         }
 
         private IList<TicketTagValue> _ticketTagValues;
-        internal IList<TicketTagValue> TicketTagValues
+        private IList<TicketTagValue> TicketTagValues
         {
             get { return _ticketTagValues ?? (_ticketTagValues = JsonHelper.Deserialize<List<TicketTagValue>>(TicketTags)); }
         }
 
         private IList<TicketStateValue> _ticketStateValues;
-        internal IList<TicketStateValue> TicketStateValues
+        private string _ticketTags;
+        private string _ticketStates;
+
+        private IList<TicketStateValue> TicketStateValues
         {
             get { return _ticketStateValues ?? (_ticketStateValues = JsonHelper.Deserialize<List<TicketStateValue>>(TicketStates)); }
         }
@@ -157,6 +172,16 @@ namespace Samba.Domain.Models.Tickets
         public IList<TicketTagValue> GetTicketTagValues()
         {
             return TicketTagValues;
+        }
+
+        public IEnumerable<TicketStateValue> GetTicketStateValues()
+        {
+            return TicketStateValues;
+        }
+
+        public IEnumerable<AccountData> GetTicketAccounts()
+        {
+            return TicketEntities.Select(x => new AccountData(x.AccountTypeId, x.AccountId));
         }
 
         public Order AddOrder(AccountTransactionType template, Department department, string userName, MenuItem menuItem, IList<TaxTemplate> taxTemplates, MenuItemPortion portion, string priceTag, ProductTimer timer)
@@ -167,7 +192,7 @@ namespace Samba.Domain.Models.Tickets
             order.AccountTransactionTypeId = template.Id;
             order.WarehouseId = department.WarehouseId;
             order.DepartmentId = department.Id;
-            TransactionDocument.AddSingletonTransaction(template.Id, template, AccountTypeId, AccountId);
+            TransactionDocument.AddSingletonTransaction(template.Id, template, GetTicketAccounts());
 
             if (taxTemplates != null)
             {
@@ -175,7 +200,7 @@ namespace Samba.Domain.Models.Tickets
                 {
                     TransactionDocument.AddSingletonTransaction(taxTemplate.AccountTransactionType.Id,
                                                taxTemplate.AccountTransactionType,
-                                               AccountTypeId, AccountId);
+                                               GetTicketAccounts());
                 }
             }
 
@@ -186,7 +211,7 @@ namespace Samba.Domain.Models.Tickets
 
         public void AddPayment(PaymentType paymentType, Account account, decimal amount, decimal exchangeRate, int userId)
         {
-            var transaction = TransactionDocument.AddNewTransaction(paymentType.AccountTransactionType, AccountTypeId, AccountId, account, amount, exchangeRate);
+            var transaction = TransactionDocument.AddNewTransaction(paymentType.AccountTransactionType, GetTicketAccounts(), amount, exchangeRate);
             var payment = new Payment { AccountTransaction = transaction, Amount = amount, Name = account.Name, PaymentTypeId = paymentType.Id };
             Payments.Add(payment);
             LastPaymentDate = DateTime.Now;
@@ -199,7 +224,7 @@ namespace Samba.Domain.Models.Tickets
 
         public void AddChangePayment(ChangePaymentType changePaymentType, Account account, decimal amount, decimal exchangeRate, int userId)
         {
-            var transaction = TransactionDocument.AddNewTransaction(changePaymentType.AccountTransactionType, AccountTypeId, AccountId, account, amount, exchangeRate);
+            var transaction = TransactionDocument.AddNewTransaction(changePaymentType.AccountTransactionType, GetTicketAccounts(), amount, exchangeRate);
             var payment = new ChangePayment { AccountTransaction = transaction, Amount = amount, Name = account.Name, ChangePaymentTypeId = changePaymentType.Id };
             ChangePayments.Add(payment);
         }
@@ -267,10 +292,8 @@ namespace Samba.Domain.Models.Tickets
         {
             var plainSum = order.GetTotal();
             var services = CalculateServices(Calculations.Where(x => !x.IncludeTax), plainSum);
-            var tax = TaxIncluded ? 0 - order.GetTotalTaxAmount(TaxIncluded, plainSum, services) : 0;
-            plainSum = plainSum + services + tax;
-            services = CalculateServices(Calculations.Where(x => x.IncludeTax), plainSum);
-            return (plainSum + services);
+            var tax = TaxIncluded ? order.GetTotalTaxAmount(TaxIncluded, plainSum, services) : 0;
+            return plainSum - tax;
         }
 
         public decimal GetPreTaxServicesTotal()
@@ -300,47 +323,19 @@ namespace Samba.Domain.Models.Tickets
 
             foreach (var calculation in calculations.OrderBy(x => x.Order))
             {
-                if (calculation.CalculationType == 0)
-                {
-                    calculation.CalculationAmount = calculation.Amount > 0 ? (sum * calculation.Amount) / 100 : 0;
-                }
-                else if (calculation.CalculationType == 1)
-                {
-                    calculation.CalculationAmount = calculation.Amount > 0 ? (currentSum * calculation.Amount) / 100 : 0;
-                }
-                else if (calculation.CalculationType == 3)
-                {
-                    if (calculation.Amount == currentSum) calculation.Amount = 0;
-                    else if (calculation.DecreaseAmount && calculation.Amount > currentSum)
-                        calculation.Amount = 0;
-                    else if (!calculation.DecreaseAmount && calculation.Amount < currentSum)
-                        calculation.Amount = 0;
-                    else
-                        calculation.CalculationAmount = calculation.Amount - currentSum;
-                }
-                else if (calculation.CalculationType == 4)
-                {
-                    if (calculation.Amount > 0)
-                        calculation.CalculationAmount = (decimal.Round(currentSum / calculation.Amount, MidpointRounding.AwayFromZero) * calculation.Amount) - currentSum;
-                    else // eğer yuvarlama eksi olarak verildiyse hep aşağı yuvarlar
-                        calculation.CalculationAmount = (Math.Truncate(currentSum / calculation.Amount) * calculation.Amount) - currentSum;
-                    if (calculation.DecreaseAmount && calculation.CalculationAmount > 0) calculation.CalculationAmount = 0;
-                    if (!calculation.DecreaseAmount && calculation.CalculationAmount < 0) calculation.CalculationAmount = 0;
-                }
-                else calculation.CalculationAmount = calculation.Amount;
+                var sumValue = calculation.UsePlainSum ? Orders.Where(x => x.DecreaseInventory || x.IncreaseInventory).Sum(x => x.GetVisibleValue()) : sum;
 
-                calculation.CalculationAmount = Decimal.Round(calculation.CalculationAmount, LocalSettings.Decimals);
-                if (calculation.DecreaseAmount && calculation.CalculationAmount > 0) calculation.CalculationAmount = 0 - calculation.CalculationAmount;
+                calculation.Update(sumValue, currentSum, LocalSettings.Decimals);
 
                 totalAmount += calculation.CalculationAmount;
                 currentSum += calculation.CalculationAmount;
 
-                if (calculation.Amount == 0)
+                if (calculation.Amount == 0 && calculation.CalculationType != 5)
                 {
                     Calculations.Remove(calculation);
                 }
 
-                UpdateCalculationTransaction(calculation, Math.Abs(calculation.CalculationAmount));
+                calculation.UpdateCalculationTransaction(TransactionDocument, Math.Abs(calculation.CalculationAmount), ExchangeRate);
             }
 
             return decimal.Round(totalAmount, LocalSettings.Decimals);
@@ -348,11 +343,11 @@ namespace Samba.Domain.Models.Tickets
 
         public void AddCalculation(CalculationType calculationType, decimal amount)
         {
-            var t = Calculations.SingleOrDefault(x => x.CalculationTypeId == calculationType.Id) ??
+            var calculation = Calculations.SingleOrDefault(x => x.CalculationTypeId == calculationType.Id) ??
                     Calculations.SingleOrDefault(x => x.AccountTransactionTypeId == calculationType.AccountTransactionType.Id);
-            if (t == null)
+            if (calculation == null)
             {
-                t = new Calculation
+                calculation = new Calculation
                         {
                             Amount = amount,
                             Name = calculationType.Name,
@@ -360,32 +355,23 @@ namespace Samba.Domain.Models.Tickets
                             CalculationTypeId = calculationType.Id,
                             IncludeTax = calculationType.IncludeTax,
                             DecreaseAmount = calculationType.DecreaseAmount,
+                            UsePlainSum = calculationType.UsePlainSum,
                             Order = calculationType.SortOrder,
                             AccountTransactionTypeId = calculationType.AccountTransactionType.Id
                         };
-                Calculations.Add(t);
-                TransactionDocument.AddSingletonTransaction(t.AccountTransactionTypeId, calculationType.AccountTransactionType, AccountTypeId, AccountId);
+                Calculations.Add(calculation);
+                TransactionDocument.AddSingletonTransaction(calculation.AccountTransactionTypeId, calculationType.AccountTransactionType, GetTicketAccounts());
             }
-            else if (t.Amount == amount)
+            else if (calculation.Amount == amount)
             {
                 amount = 0;
             }
-            else t.Amount = amount;
-            t.Name = calculationType.Name;
-            if (amount == 0)
+            else calculation.Amount = amount;
+            calculation.Name = calculationType.Name;
+            if (amount == 0 && calculation.CalculationType != 5)
             {
-                Calculations.Remove(t);
-                UpdateCalculationTransaction(t, 0);
-            }
-        }
-
-        public void UpdateCalculationTransaction(Calculation calculation, decimal amount)
-        {
-            TransactionDocument.UpdateSingletonTransactionAmount(calculation.AccountTransactionTypeId, calculation.Name, amount, ExchangeRate);
-            if (amount == 0 && TransactionDocument.AccountTransactions.Any(x => x.AccountTransactionTypeId == calculation.AccountTransactionTypeId))
-            {
-                TransactionDocument.AccountTransactions.Remove(
-                    TransactionDocument.AccountTransactions.Single(x => x.AccountTransactionTypeId == calculation.AccountTransactionTypeId));
+                Calculations.Remove(calculation);
+                calculation.UpdateCalculationTransaction(TransactionDocument, 0, ExchangeRate);
             }
         }
 
@@ -522,18 +508,17 @@ namespace Samba.Domain.Models.Tickets
             _shouldLock = false;
         }
 
-        public static Ticket Create(Department department, TicketType ticketType, Account account, decimal exchangeRate, IEnumerable<CalculationType> calculationTypes)
+        public static Ticket Create(Department department, TicketType ticketType, decimal exchangeRate, IEnumerable<CalculationType> calculationTypes)
         {
             var ticket = new Ticket
-                             {
-                                 TicketTypeId = ticketType.Id,
-                                 DepartmentId = department.Id,
-                                 AccountTypeId = ticketType.SaleTransactionType.TargetAccountTypeId,
-                                 TaxIncluded = ticketType.TaxIncluded,
-                                 TransactionDocument = new AccountTransactionDocument()
-                             };
+                {
+                    TicketTypeId = ticketType.Id,
+                    DepartmentId = department.Id,
+                    TaxIncluded = ticketType.TaxIncluded,
+                    TransactionDocument = new AccountTransactionDocument(),
+                    ExchangeRate = exchangeRate
+                };
 
-            ticket.UpdateAccount(account, exchangeRate);
             if (calculationTypes != null)
             {
                 foreach (var calculationType in calculationTypes.OrderBy(x => x.SortOrder))
@@ -615,35 +600,31 @@ namespace Samba.Domain.Models.Tickets
             return string.Join("\r", TicketTagValues.Where(x => !string.IsNullOrEmpty(x.TagValue)).Select(x => string.Format("{0}: {1}", x.TagName, x.TagValue)));
         }
 
-        public void UpdateEntity(int entityTypeId, int entityId, string entityName, int accountId, string entityCustomData)
+        public void UpdateEntity(int entityTypeId, int entityId, string entityName, int accountTypeId, int accountId, string entityCustomData)
         {
             var r = TicketEntities.SingleOrDefault(x => x.EntityTypeId == entityTypeId);
             if (r == null && entityId > 0)
             {
-                TicketEntities.Add(new TicketEntity { EntityId = entityId, EntityName = entityName, EntityTypeId = entityTypeId, AccountId = accountId, EntityCustomData = entityCustomData });
+                TicketEntities.Add(new TicketEntity
+                {
+                    EntityId = entityId,
+                    EntityName = entityName,
+                    EntityTypeId = entityTypeId,
+                    AccountTypeId = accountTypeId,
+                    AccountId = accountId,
+                    EntityCustomData = entityCustomData
+                });
             }
             else if (r != null && entityId > 0)
             {
                 r.AccountId = accountId;
+                r.AccountTypeId = accountTypeId;
                 r.EntityId = entityId;
                 r.EntityName = entityName;
                 r.EntityTypeId = entityTypeId;
             }
             else if (r != null && entityId == 0)
                 TicketEntities.Remove(r);
-        }
-
-        public void UpdateAccount(Account account, decimal exchangeRate)
-        {
-            if (account == null) return;
-            foreach (var transaction in TransactionDocument.AccountTransactions)
-            {
-                transaction.UpdateAccounts(AccountTypeId, account.Id);
-            }
-            AccountId = account.Id;
-            AccountTypeId = account.AccountTypeId;
-            AccountName = account.Name;
-            ExchangeRate = exchangeRate;
         }
 
         public IList<int> GetTaxIds()
@@ -658,13 +639,13 @@ namespace Samba.Domain.Models.Tickets
         {
             if (Orders.Count > 0)
             {
-                var orderGroup = Orders.Where(x => x.CalculatePrice).GroupBy(x => x.AccountTransactionTypeId);
+                var orderGroup = Orders.GroupBy(x => x.AccountTransactionTypeId);
                 foreach (var orders in orderGroup)
                 {
                     var o = orders;
                     var transaction = TransactionDocument.AccountTransactions.Single(x => x.AccountTransactionTypeId == o.Key);
                     var amount = o.Sum(x => GetTaxExcludedSum(x));
-                    transaction.UpdateAccounts(AccountTypeId, AccountId);
+                    transaction.UpdateAccounts(GetTicketAccounts());
                     transaction.UpdateAmount(amount, ExchangeRate);
                 }
 
@@ -676,7 +657,7 @@ namespace Samba.Domain.Models.Tickets
                     foreach (var taxId in taxIds)
                     {
                         var transaction = TransactionDocument.AccountTransactions.Single(x => x.AccountTransactionTypeId == taxId);
-                        transaction.UpdateAccounts(AccountTypeId, AccountId);
+                        transaction.UpdateAccounts(GetTicketAccounts());
                         transaction.UpdateAmount(GetTaxTotal(taxId, preTaxServices, plainSum), ExchangeRate);
                     }
                 }
@@ -794,12 +775,5 @@ namespace Samba.Domain.Models.Tickets
             var sv = GetStateValue(s);
             return sv != null ? sv.State : "";
         }
-
-        public IEnumerable<TicketStateValue> GetTicketStateValues()
-        {
-            return TicketStateValues;
-        }
-
-
     }
 }
